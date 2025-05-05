@@ -13,6 +13,7 @@ import systems
 from systems.base import BaseSystem
 from systems.criterions import PSNR, binary_cross_entropy
 
+import numpy as np
 
 @systems.register('neus-system')
 class NeuSSystem(BaseSystem):
@@ -172,22 +173,32 @@ class NeuSSystem(BaseSystem):
         out = self(batch)
         psnr = self.criterions['psnr'](out['comp_rgb_full'].to(batch['rgb']), batch['rgb'])
         W, H = self.dataset.img_wh
-        self.save_image_grid(f"it{self.global_step}-{batch['index'][0].item()}.png", [
-            {'type': 'rgb', 'img': batch['rgb'].view(H, W, 3), 'kwargs': {'data_format': 'HWC'}},
-            {'type': 'rgb', 'img': out['comp_rgb_full'].view(H, W, 3), 'kwargs': {'data_format': 'HWC'}}
-        ] + ([
-            {'type': 'rgb', 'img': out['comp_rgb_bg'].view(H, W, 3), 'kwargs': {'data_format': 'HWC'}},
-            {'type': 'rgb', 'img': out['comp_rgb'].view(H, W, 3), 'kwargs': {'data_format': 'HWC'}},
-        ] if self.config.model.learned_background else []) + [
-            {'type': 'grayscale', 'img': out['depth'].view(H, W), 'kwargs': {}},
-            {'type': 'rgb', 'img': out['comp_normal'].view(H, W, 3), 'kwargs': {'data_format': 'HWC', 'data_range': (-1, 1)}}
-        ])
+        # 下面这段是把四张图片拼接成一张grid
+        # self.save_image_grid(f"it{self.global_step}-{batch['index'][0].item()}.png", [
+        #     {'type': 'rgb', 'img': batch['rgb'].view(H, W, 3), 'kwargs': {'data_format': 'HWC'}},
+        #     {'type': 'rgb', 'img': out['comp_rgb_full'].view(H, W, 3), 'kwargs': {'data_format': 'HWC'}}
+        # ] + ([
+        #     {'type': 'rgb', 'img': out['comp_rgb_bg'].view(H, W, 3), 'kwargs': {'data_format': 'HWC'}},
+        #     {'type': 'rgb', 'img': out['comp_rgb'].view(H, W, 3), 'kwargs': {'data_format': 'HWC'}},
+        # ] if self.config.model.learned_background else []) + [
+        #     {'type': 'grayscale', 'img': out['depth'].view(H, W), 'kwargs': {}},
+        #     {'type': 'rgb', 'img': out['comp_normal'].view(H, W, 3), 'kwargs': {'data_format': 'HWC', 'data_range': (-1, 1)}}
+        # ])
+        # return {
+        #     'psnr': psnr,
+        #     'index': batch['index']
+        # }
+        
+        # 保存渲染的 RGB 图像
+        comp_rgb_full = out['comp_rgb_full'].view(H, W, 3).cpu().numpy()
+        comp_rgb_full = (comp_rgb_full * 255).astype(np.uint8)  # 转换为 uint8
+        self.save_image(f"it{self.global_step}-{batch['index'][0].item()}-comp_rgb_full.png", comp_rgb_full)
+
         return {
             'psnr': psnr,
             'index': batch['index']
         }
-          
-    
+        
     """
     # aggregate outputs from different devices when using DP
     def validation_step_end(self, out):
@@ -213,16 +224,23 @@ class NeuSSystem(BaseSystem):
         out = self(batch)
         psnr = self.criterions['psnr'](out['comp_rgb_full'].to(batch['rgb']), batch['rgb'])
         W, H = self.dataset.img_wh
-        self.save_image_grid(f"it{self.global_step}-test/{batch['index'][0].item()}.png", [
-            {'type': 'rgb', 'img': batch['rgb'].view(H, W, 3), 'kwargs': {'data_format': 'HWC'}},
-            {'type': 'rgb', 'img': out['comp_rgb_full'].view(H, W, 3), 'kwargs': {'data_format': 'HWC'}}
-        ] + ([
-            {'type': 'rgb', 'img': out['comp_rgb_bg'].view(H, W, 3), 'kwargs': {'data_format': 'HWC'}},
-            {'type': 'rgb', 'img': out['comp_rgb'].view(H, W, 3), 'kwargs': {'data_format': 'HWC'}},
-        ] if self.config.model.learned_background else []) + [
-            {'type': 'grayscale', 'img': out['depth'].view(H, W), 'kwargs': {}},
-            {'type': 'rgb', 'img': out['comp_normal'].view(H, W, 3), 'kwargs': {'data_format': 'HWC', 'data_range': (-1, 1)}}
-        ])
+        # self.save_image_grid(f"it{self.global_step}-test/{batch['index'][0].item()}.png", [
+        #     {'type': 'rgb', 'img': batch['rgb'].view(H, W, 3), 'kwargs': {'data_format': 'HWC'}},
+        #     {'type': 'rgb', 'img': out['comp_rgb_full'].view(H, W, 3), 'kwargs': {'data_format': 'HWC'}}
+        # ] + ([
+        #     {'type': 'rgb', 'img': out['comp_rgb_bg'].view(H, W, 3), 'kwargs': {'data_format': 'HWC'}},
+        #     {'type': 'rgb', 'img': out['comp_rgb'].view(H, W, 3), 'kwargs': {'data_format': 'HWC'}},
+        # ] if self.config.model.learned_background else []) + [
+        #     {'type': 'grayscale', 'img': out['depth'].view(H, W), 'kwargs': {}},
+        #     {'type': 'rgb', 'img': out['comp_normal'].view(H, W, 3), 'kwargs': {'data_format': 'HWC', 'data_range': (-1, 1)}}
+        # ])
+        
+        # 保存渲染的 RGB 图像
+        comp_rgb_full = out['comp_rgb_full'].view(H, W, 3).cpu().numpy()
+        comp_rgb_full = (comp_rgb_full * 255).astype(np.uint8)  # 转换为 uint8
+        self.save_image(f"it{self.global_step}-test/{batch['index'][0].item()}-comp_rgb_full.png", comp_rgb_full)
+
+        
         return {
             'psnr': psnr,
             'index': batch['index']
