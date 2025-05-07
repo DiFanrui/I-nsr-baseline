@@ -5,7 +5,7 @@ seed: 42
 dataset:
   name: blender
   scene: ???
-  root_dir: /home/data1/difanrui/Project/instant-nsr-pl/data/lung_511_for_debug/
+  root_dir: data/lung_511_for_debug/
   img_wh:
     - 480
     - 480
