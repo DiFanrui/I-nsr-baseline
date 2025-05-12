@@ -27,7 +27,7 @@ def plot_trajectory_with_images_open3d(json_path, image_root, downsample=2, scal
         line_set = o3d.geometry.LineSet()
         line_set.points = o3d.utility.Vector3dVector([pos, pos + z_axis])  # 起点为相机位置，终点为光轴方向
         line_set.lines = o3d.utility.Vector2iVector([[0, 1]])  # 定义线段
-        line_set.colors = o3d.utility.Vector3dVector([[0, 0, 1]])  # 蓝色线段
+        line_set.colors = o3d.utility.Vector3dVector( [[0, 0, 1]])  # 蓝色线段
         vis.add_geometry(line_set)
 
         # 加载图像
@@ -85,6 +85,6 @@ def plot_trajectory_with_images_open3d(json_path, image_root, downsample=2, scal
 
 if __name__ == "__main__":
     json_path = "data/lung_511_for_debug/transforms_val.json"
-    image_root = "data/lung_images_with_id/"  # 根据你的实际路径修改
+    image_root = "data/lung_images_with_id"  # 根据你的实际路径修改
 
     plot_trajectory_with_images_open3d(json_path, image_root)
